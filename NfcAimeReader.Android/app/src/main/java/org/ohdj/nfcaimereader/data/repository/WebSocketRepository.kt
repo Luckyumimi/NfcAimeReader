@@ -1,6 +1,15 @@
 package org.ohdj.nfcaimereader.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.ohdj.nfcaimereader.data.datastore.WebSocketPreferences
 import org.ohdj.nfcaimereader.data.websocket.WebSocketClient
 import org.ohdj.nfcaimereader.model.WebSocketServerInfo
@@ -15,7 +24,25 @@ class WebSocketRepository @Inject constructor(
     private val webSocketClient: WebSocketClient,
     private val networkScanner: NetworkScanner
 ) {
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     val connectionState = webSocketClient.connectionState
+
+    init {
+        repositoryScope.launch {
+            preferences.getRetryConnect().collectLatest { enabled ->
+                if (!enabled) return@collectLatest
+
+                while (currentCoroutineContext().isActive) {
+                    val state = connectionState.value
+                    if (!state.isConnected && !state.isConnecting) {
+                        preferences.getLastServerInfo().first()?.let(webSocketClient::connect)
+                    }
+                    delay(2_000)
+                }
+            }
+        }
+    }
 
     suspend fun connectToServer(serverInfo: WebSocketServerInfo) {
         webSocketClient.connect(serverInfo)
@@ -44,6 +71,12 @@ class WebSocketRepository @Inject constructor(
 
     suspend fun setAutoConnect(autoConnect: Boolean) {
         preferences.setAutoConnect(autoConnect)
+    }
+
+    fun getRetryConnect(): Flow<Boolean> = preferences.getRetryConnect()
+
+    suspend fun setRetryConnect(enabled: Boolean) {
+        preferences.setRetryConnect(enabled)
     }
 
     suspend fun scanNetwork(port: Int): List<WebSocketServerInfo> {

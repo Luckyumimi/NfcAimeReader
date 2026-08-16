@@ -15,6 +15,7 @@ data class WebSocketServerInfo(
 @Serializable
 data class ConnectionState(
     val isConnected: Boolean = false,
+    val isConnecting: Boolean = false,
     val message: String = "",
     val serverInfo: WebSocketServerInfo? = null
 )

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,7 +34,9 @@ import org.ohdj.nfcaimereader.ui.theme.extendedColorScheme
 @Composable
 fun WebSocketStatusComponent(
     connectionState: ConnectionState,
+    canConnectSaved: Boolean = false,
     onClick: () -> Unit,
+    onConnectSaved: () -> Unit = {},
 ) {
     val backgroundColor by animateColorAsState(
         if (connectionState.isConnected) MaterialTheme.extendedColorScheme.successContainer else MaterialTheme.colorScheme.errorContainer
@@ -47,51 +50,59 @@ fun WebSocketStatusComponent(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(24.dp)
         ) {
-            // 状态指示
-            val icon =
-                if (connectionState.isConnected) Icons.Outlined.Check else Icons.Outlined.Close
-            Icon(
-                imageVector = icon,
-                contentDescription = "Websocket Status Icon",
-                tint = if (connectionState.isConnected) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.size(24.dp)
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = if (connectionState.isConnected) "已连接" else "未连接",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (connectionState.isConnected) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.colorScheme.onErrorContainer
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val icon =
+                    if (connectionState.isConnected) Icons.Outlined.Check else Icons.Outlined.Close
+                Icon(
+                    imageVector = icon,
+                    contentDescription = "Websocket Status Icon",
+                    tint = if (connectionState.isConnected) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(24.dp)
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
-                Text(
-                    text = connectionState.message.ifEmpty {
-                        connectionState.serverInfo?.let {
-                            "${it.ip}:${it.port}"
-                        } ?: "未配置服务器"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (connectionState.isConnected) "已连接" else "未连接",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (connectionState.isConnected) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.colorScheme.onErrorContainer
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = connectionState.message.ifEmpty {
+                            connectionState.serverInfo?.let {
+                                "${it.ip}:${it.port}"
+                            } ?: "未配置服务器"
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    tint = if (connectionState.isConnected) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.colorScheme.onErrorContainer,
+                    contentDescription = "详情"
                 )
             }
 
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                tint = if (connectionState.isConnected) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.colorScheme.onErrorContainer,
-                contentDescription = "详情"
-            )
+            if (!connectionState.isConnected && canConnectSaved) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onConnectSaved,
+                    enabled = !connectionState.isConnecting
+                ) {
+                    Text(if (connectionState.isConnecting) "正在连接" else "连接已保存配置")
+                }
+            }
         }
     }
 }

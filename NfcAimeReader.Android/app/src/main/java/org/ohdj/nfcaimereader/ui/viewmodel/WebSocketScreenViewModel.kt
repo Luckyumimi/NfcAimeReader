@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.ohdj.nfcaimereader.data.repository.WebSocketRepository
@@ -33,6 +34,13 @@ class WebSocketScreenViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    val lastServerInfo: StateFlow<WebSocketServerInfo?> = repository.getLastServerInfo()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
@@ -40,12 +48,12 @@ class WebSocketScreenViewModel @Inject constructor(
     val scanResults: StateFlow<List<WebSocketServerInfo>> = _scanResults.asStateFlow()
 
     init {
-        // 检查是否有自动连接的服务器
+        // 启动时只读取一次自动连接配置。持续 collect 会在连接保存服务器信息后
+        // 再次触发 connect，形成断开、重连的反馈循环。
         viewModelScope.launch {
-            repository.getLastServerInfo().collect { serverInfo ->
-                if (serverInfo != null && serverInfo.isAutoConnect) {
-                    connectToServer(serverInfo)
-                }
+            val serverInfo = repository.getLastServerInfo().first()
+            if (serverInfo != null && serverInfo.isAutoConnect) {
+                repository.connectToServer(serverInfo)
             }
         }
     }
@@ -57,6 +65,12 @@ class WebSocketScreenViewModel @Inject constructor(
     fun connectToServer(serverInfo: WebSocketServerInfo) {
         viewModelScope.launch {
             repository.connectToServer(serverInfo)
+        }
+    }
+
+    fun connectToSavedServer() {
+        viewModelScope.launch {
+            repository.getLastServerInfo().first()?.let { repository.connectToServer(it) }
         }
     }
 

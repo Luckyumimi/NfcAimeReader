@@ -27,6 +27,7 @@ class WebSocketPreferences @Inject constructor(
         val LAST_SERVER_IP = stringPreferencesKey("last_server_ip")
         val LAST_SERVER_PORT = intPreferencesKey("last_server_port")
         val AUTO_CONNECT = booleanPreferencesKey("auto_connect")
+        val RETRY_CONNECT = booleanPreferencesKey("retry_connect")
         val SAVED_SERVERS = stringPreferencesKey("saved_servers")
     }
 
@@ -34,6 +35,9 @@ class WebSocketPreferences @Inject constructor(
         context.dataStore.edit { preferences ->
             preferences[LAST_SERVER_IP] = serverInfo.ip
             preferences[LAST_SERVER_PORT] = serverInfo.port
+            // 启动自动连接状态与最近使用的服务器一起保存。
+            // getLastServerInfo() 从该独立字段读取开关状态。
+            preferences[AUTO_CONNECT] = serverInfo.isAutoConnect
 
             // 更新保存的服务器列表
             val savedServersJson = preferences[SAVED_SERVERS] ?: "[]"
@@ -61,6 +65,18 @@ class WebSocketPreferences @Inject constructor(
     suspend fun setAutoConnect(autoConnect: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[AUTO_CONNECT] = autoConnect
+        }
+    }
+
+    suspend fun setRetryConnect(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[RETRY_CONNECT] = enabled
+        }
+    }
+
+    fun getRetryConnect(): Flow<Boolean> {
+        return context.dataStore.data.map { preferences ->
+            preferences[RETRY_CONNECT] ?: false
         }
     }
 

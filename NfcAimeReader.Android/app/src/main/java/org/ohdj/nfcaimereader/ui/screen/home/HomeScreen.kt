@@ -53,10 +53,15 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         val connectionState by webSocketViewModel.connectionState.collectAsState()
+        val lastServerInfo by webSocketViewModel.lastServerInfo.collectAsState()
         WebSocketStatusComponent(
             connectionState = connectionState,
+            canConnectSaved = lastServerInfo != null,
             onClick = {
                 navController.navigate(Screen.Config.route)
+            },
+            onConnectSaved = {
+                webSocketViewModel.connectToSavedServer()
             }
         )
     }

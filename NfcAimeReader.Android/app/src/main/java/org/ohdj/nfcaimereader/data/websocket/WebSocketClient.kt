@@ -28,6 +28,14 @@ class WebSocketClient @Inject constructor() {
     val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
     fun connect(serverInfo: WebSocketServerInfo) {
+        val currentState = _connectionState.value
+        val currentServer = currentState.serverInfo
+        if ((currentState.isConnected || currentState.isConnecting) &&
+            currentServer?.ip == serverInfo.ip && currentServer.port == serverInfo.port
+        ) {
+            return
+        }
+
         disconnect()
 
         val url = "ws://${serverInfo.ip}:${serverInfo.port}"
@@ -37,6 +45,7 @@ class WebSocketClient @Inject constructor() {
 
         _connectionState.value = ConnectionState(
             isConnected = false,
+            isConnecting = true,
             message = "正在连接到 $url...",
             serverInfo = serverInfo
         )
@@ -75,7 +84,7 @@ class WebSocketClient @Inject constructor() {
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                // 处理接收到的消息
+                // 服务端响应目前无需在客户端处理。
             }
         })
     }

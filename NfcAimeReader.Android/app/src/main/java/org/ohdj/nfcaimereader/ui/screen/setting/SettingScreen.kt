@@ -12,11 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import org.ohdj.nfcaimereader.ThemeMode
 import org.ohdj.nfcaimereader.data.datastore.FelicaPreferenceViewModel
 import org.ohdj.nfcaimereader.data.datastore.UserPreferenceViewModel
 import org.ohdj.nfcaimereader.ui.screen.setting.component.SettingSwitchItem
 import org.ohdj.nfcaimereader.ui.screen.setting.component.SettingThemeItem
+import org.ohdj.nfcaimereader.ui.viewmodel.ConnectionSettingsViewModel
 
 data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -29,10 +31,15 @@ data class felicaState(
 )
 
 @Composable
-fun SettingScreen(userPrefViewModel: UserPreferenceViewModel, felicaViewModel: FelicaPreferenceViewModel) {
+fun SettingScreen(
+    userPrefViewModel: UserPreferenceViewModel,
+    felicaViewModel: FelicaPreferenceViewModel,
+    connectionSettingsViewModel: ConnectionSettingsViewModel = hiltViewModel()
+) {
     val uiState by userPrefViewModel.settingsUiState.collectAsState(
         initial = SettingsUiState()
     )
+    val retryConnectEnabled by connectionSettingsViewModel.retryConnectEnabled.collectAsState()
 
     Column {
         SettingScreenContent(
@@ -41,6 +48,20 @@ fun SettingScreen(userPrefViewModel: UserPreferenceViewModel, felicaViewModel: F
             onDynamicColorChanged = { userPrefViewModel.updateDynamicColorEnabled(it) }
         )
         FelicaSettingSection(viewModel = felicaViewModel)
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Text(
+                text = "连接",
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            SettingSwitchItem(
+                title = "反复尝试连接",
+                description = "在未连接状态每 2 秒尝试连接一次",
+                checked = retryConnectEnabled,
+                onCheckedChange = connectionSettingsViewModel::setRetryConnect
+            )
+        }
     }
 }
 

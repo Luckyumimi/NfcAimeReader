@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.ohdj.nfcaimereader.data.repository.WebSocketRepository
 import org.ohdj.nfcaimereader.utils.NfcManager
@@ -23,9 +22,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            nfcManager.cardAccessCode
-                .filterNotNull() // 仅在有实际卡片ID可用时处理
-                .collect { accessCode ->
+            nfcManager.cardScans.collect { accessCode ->
                     if (webSocketRepository.connectionState.value.isConnected) {
                         webSocketRepository.sendCardId(accessCode)
                     }

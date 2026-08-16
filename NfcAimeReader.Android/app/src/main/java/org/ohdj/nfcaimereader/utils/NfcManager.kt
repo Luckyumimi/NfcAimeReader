@@ -19,7 +19,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,6 +46,11 @@ class NfcManager @Inject constructor(
 
     private val _cardAccessCode = MutableStateFlow<String?>(null)
     val cardAccessCode = _cardAccessCode.asStateFlow()
+
+    // 读卡是事件而不是状态。同一张卡连续刷卡时 StateFlow 不会重复发出相同值，
+    // 因此使用 SharedFlow 确保每次成功读取都会通知 WebSocket 发送端。
+    private val _cardScans = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val cardScans = _cardScans.asSharedFlow()
 
     private val _nfcState = MutableStateFlow(determineInitialNfcState())
     val nfcState = _nfcState.asStateFlow()
@@ -168,6 +175,7 @@ class NfcManager @Inject constructor(
                         if (accessCode != null) {
                             withContext(Dispatchers.Main) {
                                 _cardAccessCode.value = accessCode
+                                _cardScans.emit(accessCode)
                             }
                         } else {
                             Log.w(TAG, "Failed to get Access Code from handler")
