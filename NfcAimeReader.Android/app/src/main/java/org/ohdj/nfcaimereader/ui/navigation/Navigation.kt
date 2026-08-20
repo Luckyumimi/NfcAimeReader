@@ -219,7 +219,7 @@ fun AboutDialog(
                         append("在 ")
                         withLink(
                             LinkAnnotation.Url(
-                                url = "https://github.com/ohdj/NfcAimeReader",
+                                url = "https://github.com/Luckyumimi/NfcAimeReader",
                                 styles = TextLinkStyles(
                                     style = SpanStyle(
                                         color = MaterialTheme.colorScheme.primary,

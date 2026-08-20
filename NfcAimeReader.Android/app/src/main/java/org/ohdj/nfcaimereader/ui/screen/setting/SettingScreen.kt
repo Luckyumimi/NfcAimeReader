@@ -5,6 +5,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import android.os.Build
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,7 +54,9 @@ fun SettingScreen(
     )
     val retryConnectEnabled by connectionSettingsViewModel.retryConnectEnabled.collectAsState()
 
-    Column {
+    Column(
+        modifier = Modifier.verticalScroll(rememberScrollState())
+    ) {
         SettingScreenContent(
             uiState = uiState,
             onThemeSelected = { userPrefViewModel.updateThemeMode(it) },
