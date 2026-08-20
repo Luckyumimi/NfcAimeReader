@@ -189,6 +189,18 @@ jobs:
       - name: Prepare Release Notes
         run: |
           cat > release_notes.md << EOL
+          ## v${{ env.VERSION }}
+
+          ### 新增
+          - 未连接时可使用已保存配置手动连接。
+          - 新增“反复尝试连接”开关，未连接时每 2 秒自动重试。
+          - 设置页面新增 UDST（TRON）捐赠地址，支持一键复制。
+
+          ### 修复
+          - 修复启动时自动连接设置未正确保存的问题。
+          - 修复连接状态反复闪烁的问题。
+          - 修复同一张卡连续刷卡后无法继续读取的问题。
+
           ### segatools.ini 配置
 
           \`\`\`ini
