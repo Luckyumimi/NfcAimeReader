@@ -1,8 +1,18 @@
 package org.ohdj.nfcaimereader.ui.screen.setting
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import android.os.Build
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.ohdj.nfcaimereader.ThemeMode
 import org.ohdj.nfcaimereader.data.datastore.FelicaPreferenceViewModel
@@ -62,7 +73,52 @@ fun SettingScreen(
                 onCheckedChange = connectionSettingsViewModel::setRetryConnect
             )
         }
+        DonationSection()
     }
+}
+
+private const val DonationAddress = "TF3TK5jT6dBVqY3JTpGJaVmzhBzryq8DhN"
+
+@Composable
+private fun DonationSection() {
+    val context = LocalContext.current
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+            text = "捐赠支持",
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "UDST（TRON）",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = DonationAddress,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(onClick = { copyDonationAddress(context) }) {
+                Icon(
+                    imageVector = Icons.Outlined.ContentCopy,
+                    contentDescription = "复制捐赠地址"
+                )
+            }
+        }
+    }
+}
+
+private fun copyDonationAddress(context: Context) {
+    val clipboard = context.getSystemService(ClipboardManager::class.java)
+    clipboard?.setPrimaryClip(ClipData.newPlainText("UDST（TRON）", DonationAddress))
+    Toast.makeText(context, "捐赠地址已复制", Toast.LENGTH_SHORT).show()
 }
 
 @Composable
